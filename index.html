@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UV-K5 Tools</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "uxba8w3pf4");
+    </script>
+  </head>
+  <body>
+    <main class="app tool-scope">
+      <section class="page" id="home" data-page>
+        <header class="hero">
+          <div>
+            <p class="eyebrow">UV-K5 TOOLSET (Version 1.0)</p>
+            <h1>Tools to manage your radio.</h1>
+            <p class="subtitle">
+              Connect the radio to backup, restore, firmware update, channel editing and basic settings.
+            </p>
+            <div class="hero-links">
+              <a class="chip-link" href="#channels">Channel editor</a>
+              <a class="chip-link" href="#settings">Basic settings</a>
+              <a class="chip-link" href="#mirror">Display mirror</a>
+              <a class="chip-link" href="#smr">SMR</a>
+            </div>
+          </div>
+          <div class="status-card status-split">
+            <div class="status-main">
+              <div class="status-top">
+                <span class="status-dot" id="homeStatusDot" data-status="disconnected"></span>
+                <span id="connectionLabel">Disconnected</span>
+              </div>
+              <p id="deviceInfo" class="muted">No serial port selected.</p>
+              <div class="status-actions">
+                <div class="field-group status-serial">
+                  <label for="baudSelect">Speed</label>
+                  <select id="baudSelect">
+                    <option value="38400">38400</option>
+                    <option value="115200" selected>115200</option>
+                  </select>
+                </div>
+                <button id="connectBtn" class="primary">
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M12 22v-5" />
+                      <path d="M9 8V2" />
+                      <path d="M15 8V2" />
+                      <path d="M18 8v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8Z" />
+                    </svg>
+                  </span>
+                  Connect
+                </button>
+                <button id="disconnectBtn" class="ghost" disabled>
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M6 6l12 12" />
+                      <path d="M18 6l-12 12" />
+                    </svg>
+                  </span>
+                  Disconnect
+                </button>
+              </div>
+            </div>
+            <div class="status-side">
+              <div class="status-meta">
+                <div>
+                  <div class="muted">Firmware</div>
+                  <div id="firmwareInfo">-</div>
+                </div>
+              </div>
+              <div class="status-error status-error-popup" id="homeError" hidden>
+                <span class="status-error-text"></span>
+                <span class="status-error-close" role="button" tabindex="0" aria-label="Close error">X</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section class="panel-grid">
+          <section class="panel">
+            <h2>EEPROM backup</h2>
+            <p class="muted">Save the radio's current configuration.</p>
+            <div class="field-row">
+              <label class="toggle">
+                <input type="checkbox" id="backupCalib" />
+                <span>Include calibration</span>
+              </label>
+            </div>
+            <button id="backupBtn">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M12 3v12" />
+                  <path d="M7 10l5 5 5-5" />
+                  <path d="M4 20h16" />
+                </svg>
+              </span>
+              Backup EEPROM
+            </button>
+            <div class="progress">
+              <div class="progress-label">
+                <span>Progress</span>
+                <span id="backupPct">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="backupFill"></div>
+              </div>
+            </div>
+            <p class="hint" id="backupHint">The file will be downloaded as .bin.</p>
+          </section>
+
+          <section class="panel">
+            <h2>Restore EEPROM</h2>
+            <p class="muted">Restore a backup file to the radio.</p>
+            <div class="field-row">
+              <label class="toggle">
+                <input type="checkbox" id="restoreCalib" />
+                <span>Include calibration</span>
+              </label>
+            </div>
+            <div class="field-row">
+              <input type="file" id="restoreFile" accept=".bin" />
+            </div>
+            <button id="restoreBtn">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M12 21V9" />
+                  <path d="M7 14l5-5 5 5" />
+                  <path d="M4 4h16" />
+                </svg>
+              </span>
+              Restore EEPROM
+            </button>
+            <div class="progress">
+              <div class="progress-label">
+                <span>Progress</span>
+                <span id="restorePct">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="restoreFill"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel firmware-panel">
+            <h2>Firmware</h2>            
+            <p class="hint">For UV-K5/K6/5R</p>
+            <p class="muted">Select the packed firmware to install on the radio.</p>
+            <div class="field-row">
+              <label class="toggle">
+                <input
+                  type="radio"
+                  name="firmwareSource"
+                  id="firmwareSourceLocal"
+                  value="local"
+                  checked
+                />
+                <span>Local file</span>
+              </label>
+              <label class="toggle">
+                <input
+                  type="radio"
+                  name="firmwareSource"
+                  id="firmwareSourceGithub"
+                  value="github"
+                />
+                <span>joaquim.org UV-Kx Firmware</span>
+              </label>
+            </div>
+            <div class="field-row" id="firmwareLocalRow">
+              <input type="file" id="firmwareFile" accept=".bin,.hex" />
+            </div>
+            <p class="hint">Put the radio in boot mode before starting.</p>
+            <button id="flashBtn" class="primary">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M13 2L3 14h6l-2 8 10-12h-6l2-8z" />
+                </svg>
+              </span>
+              Program firmware
+            </button>
+            <div class="progress">
+              <div class="progress-label">
+                <span>Progress</span>
+                <span id="flashPct">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="flashFill"></div>
+              </div>
+            </div>            
+          </section>
+        </section>
+
+        <section class="panel log-panel">
+          <div class="log-header">
+            <h2>Operations log</h2>
+            <button id="clearLogBtn" class="ghost small">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M6 6l1 14h10l1-14" />
+                </svg>
+              </span>
+              Clear
+            </button>
+          </div>
+          <div id="logOutput" class="log-output" aria-live="polite"></div>
+        </section>
+      </section>
+
+      <section class="page" id="channels" data-page>
+        <header class="page-head">
+          <div>
+            <p class="eyebrow">UV-K5 TOOLSET</p>
+            <h1>Channel editor</h1>
+            <p class="subtitle">
+              Put the radio in normal mode to read and write memory channels.
+            </p>
+            <div class="hero-links">
+              <a class="chip-link" href="#home">Back to tools</a>
+            </div>
+          </div>
+
+          <section class="status-card status-split">
+            <div class="status-main">
+              <div class="status-top">
+                <span class="status-dot" id="channelsStatusDot" data-status="disconnected"></span>
+                <span id="channelsStatusLabel">Disconnected</span>
+              </div>
+              <p id="channelsDeviceInfo" class="muted">No serial port selected.</p>
+              <div class="status-actions">
+                <div class="field-group status-serial">
+                  <label for="channelsBaudSelect">Speed</label>
+                  <select id="channelsBaudSelect">
+                    <option value="38400">38400</option>
+                    <option value="115200" selected>115200</option>
+                  </select>
+                </div>
+                <button id="channelsConnect" class="primary">
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M12 22v-5" />
+                      <path d="M9 8V2" />
+                      <path d="M15 8V2" />
+                      <path d="M18 8v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8Z" />
+                    </svg>
+                  </span>
+                  Connect
+                </button>
+                <button id="channelsDisconnect" class="ghost" disabled>
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M6 6l12 12" />
+                      <path d="M18 6l-12 12" />
+                    </svg>
+                  </span>
+                  Disconnect
+                </button>
+              </div>
+            </div>
+            <div class="status-side">
+              <div class="status-meta">
+                <div>
+                  <div class="muted">Firmware</div>
+                  <div id="channelsFirmware">-</div>
+                </div>
+              </div>
+              <div class="status-error status-error-popup" id="channelsError" hidden>
+                <span class="status-error-text"></span>
+                <span class="status-error-close" role="button" tabindex="0" aria-label="Close error">X</span>
+              </div>
+            </div>
+          </section>
+
+        </header>
+
+
+        <section class="panel channel-panel">
+          <div class="channel-actions">
+            <div class="action-group">
+              <button id="readChannelsBtn" class="primary">
+                <span class="btn-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M12 3v12" />
+                    <path d="M7 10l5 5 5-5" />
+                    <path d="M4 20h16" />
+                  </svg>
+                </span>
+                Read from device
+              </button>
+              <button id="writeChannelsBtn">
+                <span class="btn-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M12 21V9" />
+                    <path d="M7 14l5-5 5 5" />
+                    <path d="M4 4h16" />
+                  </svg>
+                </span>
+                Write to device
+              </button>
+            </div>
+            <div class="action-group">
+              <button id="exportCsvBtn" class="ghost small">
+                <span class="btn-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M12 3v12" />
+                    <path d="M7 10l5 5 5-5" />
+                    <path d="M4 20h16" />
+                  </svg>
+                </span>
+                Export CSV
+              </button>
+              <button id="importCsvBtn" class="ghost small">
+                <span class="btn-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M12 21V9" />
+                    <path d="M7 14l5-5 5 5" />
+                    <path d="M4 4h16" />
+                  </svg>
+                </span>
+                Import CSV
+              </button>
+            </div>
+            <div class="action-group channel-search">
+              <label class="search-field">
+                <input id="channelSearch" type="text" placeholder="Search name or freq" />
+                <span id="channelSearchClear" class="action-icon search-clear" role="button" aria-label="Clear search" tabindex="0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6l-12 12" />
+                  </svg>
+                </span>
+              </label>
+              <div class="muted" id="channelSearchCount"></div>
+            </div>
+          </div>
+
+          <div class="channel-status">
+            <span id="channelStatus">Idle.</span>
+            <div class="progress" id="channelProgress">
+              <div class="progress-label">
+                <span>Progress&nbsp;</span>
+                <span id="channelPct">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="channelFill"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="channel-table">
+              <thead>
+                <tr>
+                  <th>CH</th>
+                  <th>Name</th>
+                  <th>RX Freq</th>
+                  <th>Duplex</th>
+                  <th>Offset</th>
+                  <th>Power</th>
+                  <th>Mode</th>
+                  <th>RX Tone Type</th>
+                  <th>RX Tone</th>
+                  <th>TX Tone Type</th>
+                  <th>TX Tone</th>
+                  <th>Step</th>
+                  <th>Reverse</th>
+                  <th>Busy</th>
+                  <th>TX Lock</th>
+                  <th>PTTID</th>
+                  <th>Scanlist</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="channelBody"></tbody>
+            </table>
+          </div>
+
+        </section>
+      </section>
+
+      <section class="page" id="settings" data-page>
+        <header class="page-head">
+          <div>
+            <p class="eyebrow">UV-K5 TOOLSET</p>
+            <h1>Basic settings</h1>
+            <p class="subtitle">Read and adjust core radio settings in normal mode.</p>
+            <div class="hero-links">
+              <a class="chip-link" href="#home">Back to tools</a>
+            </div>
+          </div>
+
+          <section class="status-card status-split">
+            <div class="status-main">
+              <div class="status-top">
+                <span class="status-dot" id="settingsStatusDot" data-status="disconnected"></span>
+                <span id="settingsStatusLabel">Disconnected</span>
+              </div>
+              <p id="settingsDeviceInfo" class="muted">No serial port selected.</p>
+              <div class="status-actions">
+                <div class="field-group status-serial">
+                  <label for="settingsBaudSelect">Speed</label>
+                  <select id="settingsBaudSelect">
+                    <option value="38400">38400</option>
+                    <option value="115200" selected>115200</option>
+                  </select>
+                </div>
+                <button id="settingsConnect" class="primary">
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M12 22v-5" />
+                      <path d="M9 8V2" />
+                      <path d="M15 8V2" />
+                      <path d="M18 8v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8Z" />
+                    </svg>
+                  </span>
+                  Connect
+                </button>
+                <button id="settingsDisconnect" class="ghost" disabled>
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M6 6l12 12" />
+                      <path d="M18 6l-12 12" />
+                    </svg>
+                  </span>
+                  Disconnect
+                </button>
+              </div>
+            </div>
+            <div class="status-side">
+              <div class="status-meta">
+                <div>
+                  <div class="muted">Firmware</div>
+                  <div id="settingsFirmware">-</div>
+                </div>
+              </div>
+              <div class="status-error status-error-popup" id="settingsError" hidden>
+                <span class="status-error-text"></span>
+                <span class="status-error-close" role="button" tabindex="0" aria-label="Close error">X</span>
+              </div>
+            </div>
+          </section>
+
+        </header>
+
+
+        <section class="panel settings-panel" id="settingsPanel">
+          <div class="channel-actions">
+            <div class="action-group">
+              <button id="readSettingsBtn" class="primary">
+                <span class="btn-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M12 3v12" />
+                    <path d="M7 10l5 5 5-5" />
+                    <path d="M4 20h16" />
+                  </svg>
+                </span>
+                Read from device
+              </button>
+              <button id="writeSettingsBtn" disabled>
+                <span class="btn-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M12 21V9" />
+                    <path d="M7 14l5-5 5 5" />
+                    <path d="M4 4h16" />
+                  </svg>
+                </span>
+                Write to device
+              </button>
+            </div>
+            <div class="action-group"></div>
+          </div>
+
+          <div class="channel-status">
+            <span id="settingsStatus">Idle.</span>
+            <div class="progress" id="settingsProgress">
+              <div class="progress-label">
+                <span>Progress&nbsp;</span>
+                <span id="settingsPct">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="settingsFill"></div>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="settings-grid">
+            <section class="settings-zone">
+              <h3>F4HWN settings</h3>
+              <div class="settings-fields">
+                <label class="settings-field">
+                  <span>Define power value when user selection is selected (SetPwr)</span>
+                  <select id="setPwr"></select>
+                </label>
+                <label class="settings-field">
+                  <span>PTT key operating mode (SetPtt)</span>
+                  <select id="setPtt"></select>
+                </label>
+                <label class="settings-field">
+                  <span>TX timeout indicator (SetTot)</span>
+                  <select id="setTot"></select>
+                </label>
+                <label class="settings-field">
+                  <span>End of transmission indicator (SetEot)</span>
+                  <select id="setEot"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Contrast level (SetCtr)</span>
+                  <select id="setContrast"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Invert display (SetInv)</span>
+                  <select id="setInv"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Lock PTT when keypad is locked (SetLck)</span>
+                  <select id="setLck"></select>
+                </label>
+                <label class="settings-field">
+                  <span>S-meter display style (SetMet)</span>
+                  <select id="setMet"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Display text style (SetGui)</span>
+                  <select id="setGui"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Set timer (SetTmr)</span>
+                  <select id="setTmr"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Set off timer (SetOff)</span>
+                  <select id="setOff"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Set NFM (SetNFM)</span>
+                  <select id="setNfm"></select>
+                </label>
+              </div>
+            </section>
+
+            <section class="settings-zone">
+              <h3>General settings</h3>
+              <div class="settings-fields">
+                <label class="settings-field">
+                  <span>Squelch (Sql)</span>
+                  <select id="squelch"></select>
+                </label>
+                <label class="settings-field">
+                  <span>RX mode (RX MODE)</span>
+                  <select id="rxMode"></select>
+                </label>
+                <label class="settings-field">
+                  <span>One-key call channel (1 Call)</span>
+                  <select id="callChannel"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Auto lock keypad after delay (KeyLck)</span>
+                  <select id="autoKeypad"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Max TX timeout (TxTOut)</span>
+                  <select id="txTimeout"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Battery saver (BatSav)</span>
+                  <select id="batSave"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Battery type</span>
+                  <select id="batteryType"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Scan resume mode (ScnRev)</span>
+                  <select id="scanResume"></select>
+                </label>
+                <label class="settings-field">
+                  <span>AM reception fix (AM Fix)</span>
+                  <select id="amFix"></select>
+                </label>
+              </div>
+            </section>
+
+            <section class="settings-zone">
+              <h3>Display settings</h3>
+              <div class="settings-fields">
+                <label class="settings-field">
+                  <span>Battery text (BatTxt)</span>
+                  <select id="batText"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Mic bar (MicBar)</span>
+                  <select id="micBar"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Channel display mode (CH DISP)</span>
+                  <select id="chDisp"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Power-on display (POnMsg)</span>
+                  <select id="pOnMsg"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Message line 1 (12 chars) also used in SMR for station identification</span>
+                  <input id="logo1" type="text" maxlength="12" />
+                </label>
+                <label class="settings-field">
+                  <span>Message line 2 (12 chars)</span>
+                  <input id="logo2" type="text" maxlength="12" />
+                </label>
+              </div>
+            </section>
+
+            <section class="settings-zone">
+              <h3>Backlight settings</h3>
+              <div class="settings-fields">
+                <label class="settings-field">
+                  <span>Backlight time (BLTime)</span>
+                  <select id="backlightTime"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Minimum backlight level (BLMin)</span>
+                  <select id="blMin"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Maximum backlight level (BLMax)</span>
+                  <select id="blMax"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Backlight on TX/RX (BLTxRx)</span>
+                  <select id="blTxRx"></select>
+                </label>
+              </div>
+            </section>
+
+            <section class="settings-zone">
+              <h3>Audio settings</h3>
+              <div class="settings-fields">
+                <label class="settings-field">
+                  <span>Mic gain (Mic)</span>
+                  <select id="micGain"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Keypad beep (Beep)</span>
+                  <select id="beep"></select>
+                </label>
+                <label class="settings-field">
+                  <span>End of transmission beep (Roger)</span>
+                  <select id="roger"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Squelch tail elimination (STE)</span>
+                  <select id="ste"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Repeater squelch tail elimination (RP STE)</span>
+                  <select id="rpSte"></select>
+                </label>
+              </div>
+            </section>
+
+            <section class="settings-zone">
+              <h3>Radio state</h3>
+              <div class="settings-fields">
+                <label class="settings-field">
+                  <span>Main VFO (TX VFO)</span>
+                  <select id="txVfo"></select>
+                </label>
+                <label class="settings-field">
+                  <span>Keypad locked</span>
+                  <select id="keypadLock"></select>
+                </label>
+              </div>
+            </section>
+          </div>
+
+        </section>
+      </section>
+
+      <section class="page" id="mirror" data-page>
+        <header class="hero">
+          <div>
+            <p class="eyebrow">UV-K5 TOOLSET</p>
+            <h1>Display mirror</h1>
+            <p class="subtitle">Mirror the radio display in real time.</p>
+            <div class="hero-links">
+              <a class="chip-link" href="#home">Back to tools</a>
+            </div>
+          </div>
+
+          <section class="status-card status-split mirror-status">
+            <div class="status-main">
+              <div class="status-top">
+                <span class="status-dot" id="mirrorStatusDot" data-status="disconnected"></span>
+                <span id="mirrorStatusTitle">Disconnected</span>
+              </div>
+              <p class="muted" id="mirrorStatusSubtitle">No serial port selected.</p>
+              <div class="status-actions">
+                <div class="field-group status-serial">
+                  <label for="mirrorBaudSelect">Speed</label>
+                  <select id="mirrorBaudSelect">
+                    <option value="38400">38400</option>
+                    <option value="115200" selected>115200</option>
+                  </select>
+                </div>
+                <button id="mirrorConnect" class="primary">
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M12 22v-5" />
+                      <path d="M9 8V2" />
+                      <path d="M15 8V2" />
+                      <path d="M18 8v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8Z" />
+                    </svg>
+                  </span>
+                  Connect
+                </button>
+                <button id="mirrorDisconnect" class="ghost" disabled>
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M6 6l12 12" />
+                      <path d="M18 6l-12 12" />
+                    </svg>
+                  </span>
+                  Disconnect
+                </button>
+              </div>
+            </div>
+            <div class="status-side">
+              <div class="status-meta">
+                <div>
+                  <div class="muted">Firmware</div>
+                  <div id="mirrorFirmware">-</div>
+                </div>
+              </div>
+              <div class="status-error status-error-popup" id="mirrorError" hidden>
+                <span class="status-error-text"></span>
+                <span class="status-error-close" role="button" tabindex="0" aria-label="Close error">X</span>
+              </div>
+            </div>
+          </section>
+        </header>
+        <section class="panel mirror-host">
+          <div class="mirror-actions">
+            <select id="mirrorColor" disabled aria-label="Screen color">
+              <option value="amber">Amber screen</option>
+              <option value="white">White screen</option>
+            </select>
+            <button class="ghost" id="mirrorToggle" disabled>
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M5 5l14 7-14 7z" />
+                </svg>
+              </span>
+              <span class="btn-label">Start</span>
+            </button>
+            <button class="ghost" id="mirrorSave" disabled>
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M12 3v12" />
+                  <path d="M7 10l5 5 5-5" />
+                  <path d="M4 20h16" />
+                </svg>
+              </span>
+              <span class="btn-label">Screen shot</span>
+            </button>
+          </div>
+          <div class="mirror-select">
+            
+          </div>
+          <div class="lcd-shell lcd-amber" id="lcdShell">
+            <canvas id="lcdCanvas" width="512" height="256"></canvas>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="smr" data-page>
+        <header class="hero">
+          <div>
+            <p class="eyebrow">UV-K5 TOOLSET</p>
+            <h1>SMR</h1>
+            <p class="subtitle">Short message radio for sending and receiving SMS frames.</p>
+            <p class="subtitle">Select the message app in the radio (F+M) to use this tool.</p>
+            <div class="hero-links">
+              <a class="chip-link" href="#home">Back to tools</a>
+            </div>
+          </div>
+          <section class="status-card status-split smr-status">
+            <div class="status-main">
+              <div class="status-top">
+                <span class="status-dot" id="smrStatusDot" data-status="disconnected"></span>
+                <span id="smrStatusTitle">Disconnected</span>
+              </div>
+              <p class="muted" id="smrStatusSubtitle">No serial port selected.</p>
+              <div class="status-actions">
+                <div class="field-group status-serial">
+                  <label for="smrBaudSelect">Speed</label>
+                  <select id="smrBaudSelect">
+                    <option value="38400">38400</option>
+                    <option value="115200" selected>115200</option>
+                  </select>
+                </div>
+                <button id="smrConnect" class="primary">
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M12 22v-5" />
+                      <path d="M9 8V2" />
+                      <path d="M15 8V2" />
+                      <path d="M18 8v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8Z" />
+                    </svg>
+                  </span>
+                  Connect
+                </button>
+                <button id="smrDisconnect" class="ghost" disabled>
+                  <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M6 6l12 12" />
+                      <path d="M18 6l-12 12" />
+                    </svg>
+                  </span>
+                  Disconnect
+                </button>
+              </div>
+            </div>
+            <div class="status-side">
+              <div class="status-meta">
+                <div>
+                  <div class="muted">Firmware</div>
+                  <div id="smrFirmware">-</div>
+                </div>
+              </div>
+              <div class="status-error status-error-popup" id="smrError" hidden>
+                <span class="status-error-text"></span>
+                <span class="status-error-close" role="button" tabindex="0" aria-label="Close error">X</span>
+              </div>
+            </div>
+          </section>
+        </header>
+
+        <section class="panel sms-panel">
+          <div class="log-header">
+            <h2>Messages</h2>
+            <button id="smsClear" class="ghost small">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M6 6l1 14h10l1-14" />
+                </svg>
+              </span>
+              Clear
+            </button>
+          </div>
+          <div id="smsLog" class="log-output sms-log" aria-live="polite"></div>
+          <div class="sms-compose">
+            <input id="smsInput" type="text" maxlength="30" placeholder="Type a message" disabled />
+            <span id="smsCount" class="sms-count" aria-live="polite">30 left</span>
+            <button id="smsSend" class="primary" disabled>
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M4 12h16" />
+                  <path d="M14 5l7 7-7 7" />
+                </svg>
+              </span>
+              Send
+            </button>
+          </div>
+          <p class="hint">Use Enter to send.</p>
+        </section>
+      </section>
+
+      <footer class="footer">
+        <span id="footerCopyright"></span>
+        <span aria-hidden="true"> • </span>
+        <span class="footer-note">
+          Tools intended for use with firmware 
+          <a href="https://github.com/joaquimorg/UV-KX-firmware" target="_blank" rel="noopener">github.com/joaquimorg/UV-KX-firmware</a>
+        </span>
+        <span class="footer-note">
+          Web tool for other models and different firmware use
+          <a href="https://spm81.github.io/Multi-UVTools" target="_blank" rel="noopener">spm81.github.io/Multi-UVTools</a>
+        </span>
+      </footer>
+    </main>
+
+    <div id="channelModal" class="modal-overlay" aria-hidden="true">
+      <div class="modal-card">
+        <h2 id="modalTitle">Working...</h2>
+        <p id="modalMessage" class="muted">Communicating with the radio.</p>
+        <div class="progress active">
+          <div class="progress-label">
+            <span>Progress</span>
+            <span id="modalPct">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="modalFill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="settingsModal" class="modal-overlay" aria-hidden="true">
+      <div class="modal-card">
+        <h2 id="settingsModalTitle">Working...</h2>
+        <p id="settingsModalMessage" class="muted">Communicating with the radio.</p>
+        <div class="progress active">
+          <div class="progress-label">
+            <span>Progress</span>
+            <span id="settingsModalPct">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="settingsModalFill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script type="module" src="channels.js"></script>
+    <script type="module" src="basic-settings.js"></script>
+    <script type="module" src="display-mirror.js"></script>
+    <script type="module" src="smr.js"></script>
+    <script type="module" src="spa.js"></script>
+  </body>
+</html>
