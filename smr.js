@@ -295,9 +295,9 @@ const sendMessage = async () => {
   const writer = port.writable.getWriter();
   try {
     await writer.write(encoder.encode(payload));
-    lastSent = message;
-    lastSentAt = Date.now();
-    lastSentEntry = appendMessage(message, "out", "SMS>");
+    //lastSent = message;
+    //lastSentAt = Date.now();
+    //lastSentEntry = appendMessage(message, "out", "SMS>");
     inputEl.value = "";
     inputEl.focus();
     updateCounter();

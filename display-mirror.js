@@ -332,18 +332,98 @@ const toggleMirror = async () => {
   }
 };
 
+const drawRoundedRect = (ctx, x, y, width, height, radius) => {
+  const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+};
+
 const saveScreenshot = () => {
-  if (!canvas) return;
-  const isAmber = colorSelect && colorSelect.value === "amber";
-  const padding = 6;
+  if (!canvas || !shell) return;
+
+  const shellStyles = getComputedStyle(shell);
+  const padding = parseFloat(shellStyles.padding) || 0;
+  const borderWidth = parseFloat(shellStyles.borderTopWidth) || 0;
+  const radius = parseFloat(shellStyles.borderRadius) || 0;
+
+  const scaleX = canvas.offsetWidth ? canvas.width / canvas.offsetWidth : 1;
+  const scaleY = canvas.offsetHeight ? canvas.height / canvas.offsetHeight : 1;
+  const shellWidth = Math.round(shell.offsetWidth * scaleX);
+  const shellHeight = Math.round(shell.offsetHeight * scaleY);
+  const padX = padding * scaleX;
+  const padY = padding * scaleY;
+  const borderX = borderWidth * scaleX;
+  const borderY = borderWidth * scaleY;
+
   const temp = document.createElement("canvas");
-  temp.width = canvas.width + padding * 2;
-  temp.height = canvas.height + padding * 2;
+  temp.width = shellWidth;
+  temp.height = shellHeight;
   const tempContext = temp.getContext("2d");
   if (!tempContext) return;
-  tempContext.fillStyle = isAmber ? "#f5a43a" : "#e0ebff";
-  tempContext.fillRect(0, 0, temp.width, temp.height);
-  tempContext.drawImage(canvas, padding, padding);
+
+  const isAmber = shell.classList.contains("lcd-amber");
+  const angle = (160 * Math.PI) / 180;
+  const dx = Math.sin(angle);
+  const dy = -Math.cos(angle);
+  const centerX = shellWidth / 2;
+  const centerY = shellHeight / 2;
+  const gradientLength = Math.abs(shellWidth * dx) + Math.abs(shellHeight * dy);
+  const gradient = tempContext.createLinearGradient(
+    centerX - (dx * gradientLength) / 2,
+    centerY - (dy * gradientLength) / 2,
+    centerX + (dx * gradientLength) / 2,
+    centerY + (dy * gradientLength) / 2,
+  );
+  if (isAmber) {
+    gradient.addColorStop(0, "#ffb45e");
+    gradient.addColorStop(1, "#e07f2a");
+  } else {
+    gradient.addColorStop(0, "#f3f7ff");
+    gradient.addColorStop(1, "#cfdcff");
+  }
+
+  drawRoundedRect(tempContext, 0, 0, shellWidth, shellHeight, radius * scaleX);
+  tempContext.fillStyle = gradient;
+  tempContext.fill();
+
+  if (borderWidth > 0) {
+    tempContext.lineWidth = borderWidth * scaleX;
+    tempContext.strokeStyle = shellStyles.borderTopColor;
+    tempContext.stroke();
+  }
+
+  // Subtle inset shadow to mimic the CSS shell depth.
+  const shadow = tempContext.createRadialGradient(
+    shellWidth / 2,
+    shellHeight / 2,
+    Math.min(shellWidth, shellHeight) * 0.15,
+    shellWidth / 2,
+    shellHeight / 2,
+    Math.min(shellWidth, shellHeight) * 0.6,
+  );
+  shadow.addColorStop(0, "rgba(0, 0, 0, 0)");
+  shadow.addColorStop(1, "rgba(0, 0, 0, 0.35)");
+  tempContext.save();
+  drawRoundedRect(tempContext, 0, 0, shellWidth, shellHeight, radius * scaleX);
+  tempContext.clip();
+  tempContext.fillStyle = shadow;
+  tempContext.fillRect(0, 0, shellWidth, shellHeight);
+  tempContext.restore();
+
+  const contentX = padX + borderX;
+  const contentY = padY + borderY;
+  const contentWidth = shellWidth - contentX * 2;
+  const contentHeight = shellHeight - contentY * 2;
+  tempContext.drawImage(canvas, contentX, contentY, contentWidth, contentHeight);
 
   const link = document.createElement("a");
   link.download = "uv-k5-screenshot.png";
