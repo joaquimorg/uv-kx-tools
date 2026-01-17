@@ -2,6 +2,8 @@
 
 Web application to connect Quansheng UV-K5/K6/5R radios via Web Serial and perform maintenance and configuration tasks. Includes EEPROM backup/restore, firmware programming, settings editing, and SMR.
 
+This tools are intended to be used with my firmware https://github.com/joaquimorg/UV-KX-firmware for Quansheng UV-K5/K6/5R radios.
+
 ![UV-KX Tools](doc/uvk5_tools.jpg)
 
 ## Features
