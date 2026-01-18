@@ -2571,6 +2571,8 @@ const appState = {
   insertChannel,
   removeChannel,
   clearChannelSearch,
+  connectChannels,
+  disconnectChannels,
   showTooltip,
   hideTooltip,
   settingsError,
