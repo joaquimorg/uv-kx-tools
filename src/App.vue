@@ -75,6 +75,13 @@ const serialState = reactive({
   activeClient: null,
 });
 
+const USB_DEVICE_LABELS = {
+  "1a86:7523": "CH340",
+  "10c4:ea60": "CP210x",
+  "067b:2303": "PL2303",
+  "0403:6001": "FT232",
+};
+
 const baud = ref(String(getPreferredBaud() || 115200));
 watch(baud, (value) => {
   const numeric = Number(value);
@@ -90,8 +97,21 @@ const deviceInfoText = computed(() => {
   if (!port) return "No serial port selected.";
   const info = port.getInfo ? port.getInfo() : {};
   const details = [];
-  if (info.usbVendorId) details.push(`VID ${info.usbVendorId.toString(16)}`);
-  if (info.usbProductId) details.push(`PID ${info.usbProductId.toString(16)}`);
+  let label = "";
+  if (info.usbVendorId && info.usbProductId) {
+    const vidHex = info.usbVendorId.toString(16);
+    const pidHex = info.usbProductId.toString(16);
+    const key = `${vidHex}:${pidHex}`;
+    label = USB_DEVICE_LABELS[key] || "";
+    details.push(`VID ${vidHex}`);
+    details.push(`PID ${pidHex}`);
+  } else {
+    if (info.usbVendorId) details.push(`VID ${info.usbVendorId.toString(16)}`);
+    if (info.usbProductId) details.push(`PID ${info.usbProductId.toString(16)}`);
+  }
+  if (label) {
+    return `Active port (${label}, ${details.join(" / ")})`;
+  }
   return details.length ? `Active port (${details.join(" / ")})` : "Serial port ready.";
 });
 
