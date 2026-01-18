@@ -1,6 +1,6 @@
 # UV-KX Tools
 
-Web application to connect Quansheng UV-K5/K6/5R radios via Web Serial and perform maintenance and configuration tasks. Includes EEPROM backup/restore, firmware programming, settings editing, and SMR.
+Web application built with Vue and Vite to connect Quansheng UV-K5/K6/5R radios via Web Serial and perform maintenance and configuration tasks. Includes EEPROM backup/restore, firmware programming, settings editing, and SMR.
 
 This tools are intended to be used with my firmware https://github.com/joaquimorg/UV-KX-firmware for Quansheng UV-K5/K6/5R radios.
 
@@ -29,6 +29,12 @@ This tools are intended to be used with my firmware https://github.com/joaquimor
    - EEPROM Backup/Restore.
    - Firmware: select a `.bin` file or use the GitHub option.
    - Channels, basic settings, display mirror.
+
+## Development
+
+1. Install dependencies: `npm install`
+2. Start the dev server: `npm run dev`
+3. Build for production: `npm run build`
 
 ## Firmware
 
