@@ -1046,6 +1046,25 @@ h2,
   display: inline-block;
 }
 
+.warning-card {
+  border-color: rgba(255, 120, 120, 0.45);
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 140, 140, 0.2), transparent 55%),
+    linear-gradient(140deg, rgba(64, 12, 14, 0.95), rgba(24, 8, 14, 0.98));
+  box-shadow: 0 20px 40px rgba(40, 8, 12, 0.55);
+}
+
+.warning-card h2 {
+  color: #ffb6b6;
+}
+
+.warning-text {
+  margin: 0;
+  color: #ffd6d6;
+  font-size: 0.95rem;
+  /*max-width: 720px;*/
+}
+
 .footer {
   display: flex;
   justify-content: center;

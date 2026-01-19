@@ -220,6 +220,14 @@
         </div>
       </div>
     </section>
+
+    <section class="panel warning-card" aria-live="polite">
+      <h2>Warning</h2>
+      <p class="warning-text">
+        Use these tools at your own risk. I am not responsible for any damage, loss, or failures
+        caused to radios.
+      </p>
+    </section>
   </section>
 </template>
 
