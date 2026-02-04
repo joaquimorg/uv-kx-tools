@@ -74,20 +74,6 @@
               <div id="mirrorFirmware">{{ firmwareLabel }}</div>
             </div>
           </div>
-          <div class="status-error status-error-popup" id="mirrorError" :hidden="!mirrorError">
-            <span class="status-error-text">{{ mirrorError }}</span>
-            <span
-              class="status-error-close"
-              role="button"
-              tabindex="0"
-              aria-label="Close error"
-              @click="mirrorError = ''"
-              @keydown.enter.prevent="mirrorError = ''"
-              @keydown.space.prevent="mirrorError = ''"
-            >
-              X
-            </span>
-          </div>
         </div>
       </section>
     </header>

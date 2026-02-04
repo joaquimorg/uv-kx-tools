@@ -74,20 +74,6 @@
               <div id="channelsFirmware">{{ firmwareLabel }}</div>
             </div>
           </div>
-          <div class="status-error status-error-popup" id="channelsError" :hidden="!channelsError">
-            <span class="status-error-text">{{ channelsError }}</span>
-            <span
-              class="status-error-close"
-              role="button"
-              tabindex="0"
-              aria-label="Close error"
-              @click="channelsError = ''"
-              @keydown.enter.prevent="channelsError = ''"
-              @keydown.space.prevent="channelsError = ''"
-            >
-              X
-            </span>
-          </div>
         </div>
       </section>
     </header>
@@ -182,7 +168,13 @@
       </div>
 
       <div class="channel-status">
-        <span id="channelStatus" :class="{ 'status-error': channelStatusTone === 'error' }">
+        <span
+          id="channelStatus"
+          :class="{
+            'status-error': channelStatusTone === 'error',
+            'status-warning': channelStatusTone === 'warning',
+          }"
+        >
           {{ channelStatus }}
         </span>
         <div class="progress" id="channelProgress" :class="{ active: channelProgressVisible }">

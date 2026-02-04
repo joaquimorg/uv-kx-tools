@@ -16,6 +16,7 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, provide, reactive, ref, watch } from "vue";
+import { useToast } from "vue-toastification";
 import { AppStateKey } from "./state/appStateKey.js";
 import ActionTooltip from "./components/ActionTooltip.vue";
 import AppFooter from "./components/AppFooter.vue";
@@ -167,6 +168,34 @@ const clearLog = () => {
   logEntries.value = [];
 };
 
+const toast = useToast();
+const toastError = (message) => {
+  if (!message) return;
+  toast.error(message);
+};
+const toastWarning = (message) => {
+  if (!message) return;
+  toast.warning(message);
+};
+
+const FIRMWARE_WARNING_MESSAGE =
+  "Connection opened, but firmware information could not be read. Check the selected speed and confirm that you are using compatible firmware.";
+
+const isFirmwareInfoMissing = () => {
+  const version = serialState.firmwareVersion;
+  return !version || version === "-" || !version.trim();
+};
+
+const warnIfFirmwareMissing = (onWarning) => {
+  if (!isFirmwareInfoMissing()) return false;
+  log(FIRMWARE_WARNING_MESSAGE, "warning");
+  toastWarning(FIRMWARE_WARNING_MESSAGE);
+  if (typeof onWarning === "function") {
+    onWarning(FIRMWARE_WARNING_MESSAGE);
+  }
+  return true;
+};
+
 const homeError = ref("");
 const backupIncludeCal = ref(false);
 const restoreIncludeCal = ref(false);
@@ -213,6 +242,7 @@ const connectHome = async () => {
     const message = "Another tool is using the serial connection.";
     homeError.value = message;
     log(message, "error");
+    toastError(message);
     return;
   }
   homeError.value = "";
@@ -220,10 +250,12 @@ const connectHome = async () => {
     await connectSerial({ baudRate: Number(baud.value) });
     homeError.value = "";
     log(`Connected at ${baud.value} bps.`);
+    warnIfFirmwareMissing();
   } catch (error) {
     const message = `Failed to connect: ${error.message}`;
     homeError.value = message;
     log(message, "error");
+    toastError(message);
   } finally {
     release("home");
   }
@@ -234,6 +266,7 @@ const disconnectHome = async () => {
     const message = "Another tool is using the serial connection.";
     homeError.value = message;
     log(message, "error");
+    toastError(message);
     return;
   }
   homeError.value = "";
@@ -245,6 +278,7 @@ const disconnectHome = async () => {
     const message = `Failed to disconnect: ${error.message}`;
     homeError.value = message;
     log(message, "error");
+    toastError(message);
   } finally {
     release("home");
   }
@@ -282,7 +316,9 @@ const restoreRange = async (start, input) => {
 
 const backupEeprom = async () => {
   if (!claim("home")) {
-    log("Another tool is using the serial connection.", "error");
+    const message = "Another tool is using the serial connection.";
+    log(message, "error");
+    toastError(message);
     return;
   }
   const includeCal = backupIncludeCal.value;
@@ -293,7 +329,9 @@ const backupEeprom = async () => {
     await backupRange(0, end, fileName);
     log("Backup completed.", "success");
   } catch (error) {
-    log(`Backup failed: ${error.message}`, "error");
+    const message = `Backup failed: ${error.message}`;
+    log(message, "error");
+    toastError(message);
     setProgress(backupProgress, backupProgressVisible, 0, false);
   } finally {
     release("home");
@@ -302,20 +340,26 @@ const backupEeprom = async () => {
 
 const restoreEeprom = async () => {
   if (!claim("home")) {
-    log("Another tool is using the serial connection.", "error");
+    const message = "Another tool is using the serial connection.";
+    log(message, "error");
+    toastError(message);
     return;
   }
   const inputEl = restoreFileInput.value;
   const file = inputEl && inputEl.files ? inputEl.files[0] : null;
   if (!file) {
-    log("Select a .bin file to restore.", "error");
+    const message = "Select a .bin file to restore.";
+    log(message, "error");
+    toastError(message);
     release("home");
     return;
   }
   const includeCal = restoreIncludeCal.value;
   const maxSize = includeCal ? EEPROM_CAL_END : EEPROM_CONFIG_END;
   if (file.size > maxSize) {
-    log(`File too large for this mode. Max size is ${maxSize} bytes.`, "error");
+    const message = `File too large for this mode. Max size is ${maxSize} bytes.`;
+    log(message, "error");
+    toastError(message);
     release("home");
     return;
   }
@@ -324,7 +368,9 @@ const restoreEeprom = async () => {
     await restoreRange(0, file);
     log("Restore completed.", "success");
   } catch (error) {
-    log(`Restore failed: ${error.message}`, "error");
+    const message = `Restore failed: ${error.message}`;
+    log(message, "error");
+    toastError(message);
     setProgress(restoreProgress, restoreProgressVisible, 0, false);
   } finally {
     release("home");
@@ -333,13 +379,17 @@ const restoreEeprom = async () => {
 
 const flashFirmware = async () => {
   if (!claim("home")) {
-    log("Another tool is using the serial connection.", "error");
+    const message = "Another tool is using the serial connection.";
+    log(message, "error");
+    toastError(message);
     return;
   }
   if (!useGithubFirmware.value) {
     const inputEl = firmwareFileInput.value;
     if (!inputEl || !inputEl.files || !inputEl.files.length) {
-      log("Select a firmware file or choose the GitHub option.", "error");
+      const message = "Select a firmware file or choose the GitHub option.";
+      log(message, "error");
+      toastError(message);
       release("home");
       return;
     }
@@ -432,7 +482,9 @@ const flashFirmware = async () => {
     hideProgressLater(flashProgress, flashProgressVisible);
     log("Firmware programmed successfully.", "success");
   } catch (error) {
-    log(`Firmware programming failed: ${error.message}`, "error");
+    const message = `Firmware programming failed: ${error.message}`;
+    log(message, "error");
+    toastError(message);
     setProgress(flashProgress, flashProgressVisible, 0, false);
   } finally {
     await disconnectSerial({ keepPort: true });
@@ -600,6 +652,11 @@ const clearChannelSearch = () => {
 const setChannelStatus = (message, tone = "info") => {
   channelStatus.value = message;
   channelStatusTone.value = tone;
+  if (tone === "error") {
+    toastError(message);
+  } else if (tone === "warning") {
+    toastWarning(message);
+  }
 };
 
 const setChannelProgress = (value, visible = true) => {
@@ -939,6 +996,7 @@ const connectChannels = async () => {
   try {
     await connectSerial({ baudRate: Number(baud.value) });
     channelsError.value = "";
+    warnIfFirmwareMissing();
     setChannelStatus("Connected.");
   } catch (error) {
     const message = `Failed to connect: ${error.message || error}`;
@@ -1591,6 +1649,11 @@ const settingsEditable = computed(() => settingsCanEdit.value && isConnected.val
 const setSettingsStatus = (message, tone = "info") => {
   settingsStatus.value = message;
   settingsStatusTone.value = tone;
+  if (tone === "error") {
+    toastError(message);
+  } else if (tone === "warning") {
+    toastWarning(message);
+  }
 };
 
 const setSettingsProgress = (value, visible = true) => {
@@ -1632,6 +1695,7 @@ const connectSettings = async () => {
   try {
     await connectSerial({ baudRate: Number(baud.value) });
     settingsError.value = "";
+    warnIfFirmwareMissing();
     setSettingsStatus("Connected.");
   } catch (error) {
     const message = `Failed to connect: ${error.message || error}`;
@@ -2250,14 +2314,19 @@ const saveScreenshot = () => {
 
 const connectMirror = async () => {
   if (!claim("mirror")) {
-    mirrorError.value = "Another tool is using the serial connection.";
+    const message = "Another tool is using the serial connection.";
+    mirrorError.value = message;
+    toastError(message);
     return;
   }
   mirrorError.value = "";
   try {
     await connectSerial({ baudRate: Number(baud.value) });
+    warnIfFirmwareMissing();
   } catch (error) {
-    mirrorError.value = `Failed to connect: ${error.message || error}`;
+    const message = `Failed to connect: ${error.message || error}`;
+    mirrorError.value = message;
+    toastError(message);
   } finally {
     release("mirror");
   }
@@ -2265,7 +2334,9 @@ const connectMirror = async () => {
 
 const disconnectMirror = async () => {
   if (!claim("mirror")) {
-    mirrorError.value = "Another tool is using the serial connection.";
+    const message = "Another tool is using the serial connection.";
+    mirrorError.value = message;
+    toastError(message);
     return;
   }
   mirrorError.value = "";
@@ -2276,7 +2347,9 @@ const disconnectMirror = async () => {
     await stopMirrorReader();
     await disconnectSerial();
   } catch (error) {
-    mirrorError.value = `Failed to disconnect: ${error.message || error}`;
+    const message = `Failed to disconnect: ${error.message || error}`;
+    mirrorError.value = message;
+    toastError(message);
   } finally {
     release("mirror");
   }
@@ -2477,14 +2550,19 @@ const clearSmrLog = () => {
 
 const connectSmr = async () => {
   if (!claim("smr")) {
-    smrError.value = "Another tool is using the serial connection.";
+    const message = "Another tool is using the serial connection.";
+    smrError.value = message;
+    toastError(message);
     return;
   }
   smrError.value = "";
   try {
     await connectSerial({ baudRate: Number(baud.value) });
+    warnIfFirmwareMissing();
   } catch (error) {
-    smrError.value = `Failed to connect: ${error.message || error}`;
+    const message = `Failed to connect: ${error.message || error}`;
+    smrError.value = message;
+    toastError(message);
   } finally {
     release("smr");
   }
@@ -2492,7 +2570,9 @@ const connectSmr = async () => {
 
 const disconnectSmr = async () => {
   if (!claim("smr")) {
-    smrError.value = "Another tool is using the serial connection.";
+    const message = "Another tool is using the serial connection.";
+    smrError.value = message;
+    toastError(message);
     return;
   }
   smrError.value = "";
@@ -2500,7 +2580,9 @@ const disconnectSmr = async () => {
     await stopSmrReader();
     await disconnectSerial();
   } catch (error) {
-    smrError.value = `Failed to disconnect: ${error.message || error}`;
+    const message = `Failed to disconnect: ${error.message || error}`;
+    smrError.value = message;
+    toastError(message);
   } finally {
     release("smr");
   }

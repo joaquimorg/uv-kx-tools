@@ -415,6 +415,10 @@ h2,
   color: #ff9b9b;
 }
 
+.status-warning {
+  color: #ffd08a;
+}
+
 .status-error[hidden],
 .status-error-popup[hidden] {
   display: none;
@@ -1044,6 +1048,45 @@ h2,
   border-radius: 8px;
   margin-bottom: 6px;
   display: inline-block;
+}
+
+.log-output [data-tone="warning"] {
+  color: #ffcf8a;
+  background: rgba(255, 193, 107, 0.12);
+  border: 1px solid rgba(255, 193, 107, 0.35);
+  padding: 6px 8px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  display: inline-block;
+}
+
+.Vue-Toastification__container {
+  padding: 18px 12px;
+}
+
+.Vue-Toastification__toast {
+  background: rgba(16, 22, 38, 0.98);
+  color: var(--text);
+  border: 1px solid rgba(86, 208, 255, 0.18);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  font-family: "Space Grotesk", "Sora", "Manrope", sans-serif;
+}
+
+.Vue-Toastification__toast--error {
+  background: rgba(64, 12, 14, 0.95);
+  border-color: rgba(255, 140, 140, 0.7);
+  color: #ffd6d6;
+}
+
+.Vue-Toastification__toast--warning {
+  background: rgba(64, 44, 12, 0.95);
+  border-color: rgba(255, 200, 120, 0.7);
+  color: #ffe2b3;
+}
+
+.Vue-Toastification__close-button {
+  color: inherit;
 }
 
 .warning-card {

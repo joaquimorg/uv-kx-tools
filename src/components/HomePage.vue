@@ -73,20 +73,6 @@
               <div id="firmwareInfo">{{ firmwareLabel }}</div>
             </div>
           </div>
-          <div class="status-error status-error-popup" id="homeError" :hidden="!homeError">
-            <span class="status-error-text">{{ homeError }}</span>
-            <span
-              class="status-error-close"
-              role="button"
-              tabindex="0"
-              aria-label="Close error"
-              @click="homeError = ''"
-              @keydown.enter.prevent="homeError = ''"
-              @keydown.space.prevent="homeError = ''"
-            >
-              X
-            </span>
-          </div>
         </div>
       </div>
     </header>
